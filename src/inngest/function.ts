@@ -1,19 +1,43 @@
 import prisma from "@/lib/db";
 import { inngest } from "./client";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { generateText } from "ai";
+import { createOpenAI } from "@ai-sdk/openai";
+import { createAnthropic } from "@ai-sdk/anthropic";
 
-export const helloWorld = inngest.createFunction(
-  { id: "hello-world" },
-  { event: "test/hello.world" },
+const googleAI = createGoogleGenerativeAI();
+const Openai = createOpenAI();
+const Anthropic = createAnthropic(); 
+
+export const execute = inngest.createFunction(
+  { id: "execute-ai" },
+  { event: "execute/ai" },
   async ({ event, step }) => {
-    await step.sleep("wait-a-moment", "5s");
-    await step.sleep("wait-a-moment", "5s");
-    await step.sleep("wait-a-moment", "5s");
-    await step.run("log-event-data", async () => {
-      return prisma.workflow.create({
-        data: {
-          name: `Workflow for ${event.data.email}`,
-        },
-      });
-    });
-  },
+    await step.sleep("pretend","5s");
+    const {steps:geministeps}=await step.ai.wrap("Generate Text with AI",generateText,
+      {
+        model: googleAI("gemini-2.5-flash"),
+        system: "You are a helpful assistant",  
+        prompt: "what is 2+2?",
+
+      }
+    );
+    const {steps:openaisteps}=await step.ai.wrap("Generate Text with AI",generateText,
+      {
+        model: Openai("gpt-4-turbo"),
+        system: "You are a helpful assistant",  
+        prompt: "what is 2+2?",
+
+      }
+    );
+    const {steps:anthropicsteps}=await step.ai.wrap("Generate Text with AI",generateText,
+      {
+        model: Anthropic("claude-2"),
+        system: "You are a helpful assistant",  
+        prompt: "what is 2+2?",
+
+      }
+    );
+    return {steps:{geministeps,openaisteps,anthropicsteps}};
+  }
 );
