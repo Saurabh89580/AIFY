@@ -1,26 +1,18 @@
-import { useTRPC } from "@/trpc/client";
-import { Client } from "@/app/client";  
-import { getQueryClient, trpc } from "@/trpc/server";
-import { dehydrate, HydrationBoundary, useQuery } from "@tanstack/react-query";
-import { getQuarter } from "date-fns";
-import { tr } from "date-fns/locale";
-import { Suspense } from "react";
-import { Fallback } from "@radix-ui/react-avatar";
-
- 
+import { requireAuth } from "@/lib/auth-utils"
+import { caller } from "@/trpc/server";
+import page from "./(auth)/signup/page";
+import { LoginButton } from "./login-button";
 
 const Page = async () => {
-  const queryClient = getQueryClient();
-
-  void queryClient.prefetchQuery(trpc.getUsers.queryOptions());
+  await requireAuth();
+  const data=await caller.getUsers();
   return (
-    <div>
-      <HydrationBoundary state={dehydrate(queryClient)}>
-      <Suspense fallback={<div>Loading...</div>}>
-        <Client/>
-        </Suspense>
-      </HydrationBoundary>
+    <div className="min-h-screen min-w-screen flex items-center justify-center flex-col gap-y-6 p-4">
+      <div>
+        {JSON.stringify(data)}
+        </div>
+      <LoginButton />
     </div>
   );
-}
+};
 export default Page;
