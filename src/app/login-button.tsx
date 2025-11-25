@@ -3,11 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 
-export const LoginButton = () => {
+export const LogoutButton = () => {
     return (
         <div>
             <Button onClick={() => {authClient.signOut();}}>
-                Login out
+                Log out
             </Button>
         </div>
     );
