@@ -13,6 +13,12 @@ const Page = () => {
   const queryClient=useQueryClient();
   const {data}= useQuery(trpc.getWorkflows.queryOptions());
 
+  const testAi=useMutation(trpc.testAI.mutationOptions({
+    onSuccess:(data)=>{
+      toast.success("AI Job Queued");
+    }
+  }));
+
   const create=useMutation(trpc.createWorkflow.mutationOptions({
     onSuccess:()=>{
       toast.success("Workflow Created");
@@ -24,6 +30,7 @@ const Page = () => {
       <div>
         {JSON.stringify(data)}
         </div>
+        <Button disabled={testAi.isPending} onClick={() => testAi.mutate()} >Test AI</Button>
         <Button disabled={create.isPending} onClick={() => create.mutate()} >Create Workflow</Button>
       <LogoutButton />
     </div>
