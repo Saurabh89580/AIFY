@@ -56,7 +56,7 @@ export function RegisterForm(){
 
     const isPending=form.formState.isSubmitting;
     return (
-        <div className="flex flex-col gap-6 max-w-md mx-auto mt-10">
+        <div className="">
             <Card>
                 <CardHeader className="text-center">    
                     <CardTitle>
