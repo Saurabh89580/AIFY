@@ -1,29 +1,7 @@
-import { inngest } from '@/inngest/client';
-import { createTRPCRouter, premiumProcedure, protectedProcedure } from '../init';
-import prisma from '@/lib/db';
-import { TRPCError } from '@trpc/server';
-import { google } from '@ai-sdk/google';
-import { generateText } from 'ai';
+import { createTRPCRouter } from '../init';
+import { workflowsRouter } from '@/features/workflows/server/router';
 
 export const appRouter = createTRPCRouter({
-  testAI: premiumProcedure.mutation(async () => {
-    // throw new TRPCError({code:"BAD_REQUEST", message:"something went wrong"});
-    await inngest.send({
-      name: 'execute/ai',
-    });
-    return { success: true, message: "Event Sent" };
-  }),
-  getWorkflows: protectedProcedure.query(({ ctx }) => {
-    return prisma.workflow.findMany();
-  }),
-  createWorkflow: protectedProcedure.mutation(async () => {
-    await inngest.send({
-      name: "test/hello.world",
-      data: {
-        email: "sur@getMaxListeners.com",
-      },
-    });
-    return { success: true, message: "Event Sent" };
-  }),
+  workflow:workflowsRouter,
 });
 export type AppRouter = typeof appRouter;
