@@ -1,66 +1,46 @@
-import prisma from "@/lib/db";
+import { NonRetriableError } from "inngest";
 import { inngest } from "./client";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { generateText } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
-import { createAnthropic } from "@ai-sdk/anthropic";
-import * as Sentry from "@sentry/nextjs";
-import { warn } from "console";
+import prisma from "@/lib/db";
+import { topologicalSort } from "./util";
+import { NodeType } from "@/generated/prisma";
+import { getExecutor } from "@/features/executions/lib/executor-registry";
 
-const googleAI = createGoogleGenerativeAI();
-const Openai = createOpenAI();
-const Anthropic = createAnthropic();
-
-export const execute = inngest.createFunction(
-  { id: "execute-ai" },
-  { event: "execute/ai" },
+export const executeWorkflow = inngest.createFunction(
+  { id: "execute-workflow" },
+  { event: "workflows/execute.workflow" },
   async ({ event, step }) => {
-    await step.sleep("pretend", "5s");
-    Sentry.logger.info('User triggered test log', { log_source: 'sentry_test' })
-    console.warn("Executing AI Task for event:", event.id);
-    console.error("This is a test error log for Sentry integration");
-    const { steps: geministeps } = await step.ai.wrap(
-      "Generate Text with AI",
-      generateText,
-      {
-        model: googleAI("gemini-2.5-flash"),
-        system: "You are a helpful assistant",
-        prompt: "what is 2+2?",
-        experimental_telemetry: {
-          isEnabled: true,
-          recordInputs: true,
-          recordOutputs: true,
+    const workflowId=event.data.workflowId;
+    if(!workflowId){
+      throw new NonRetriableError("No workflow ID provided");
+    }
+    const sortedNodes =await step.run("prepare-workflow",async () =>{
+      const workflow=await prisma.workflow.findUniqueOrThrow({
+        where:{ id:workflowId },
+        include:{
+          nodes:true,
+          connections:true,
         },
-      }
-    );
-    const { steps: openaisteps } = await step.ai.wrap(
-      "Generate Text with AI",
-      generateText,
-      {
-        model: Openai("gpt-4-turbo"),
-        system: "You are a helpful assistant",
-        prompt: "what is 2+2?",
-        experimental_telemetry: {
-          isEnabled: true,
-          recordInputs: true,
-          recordOutputs: true,
-        },
-      }
-    );
-    const { steps: anthropicsteps } = await step.ai.wrap(
-      "Generate Text with AI",
-      generateText,
-      {
-        model: Anthropic("claude-2"),
-        system: "You are a helpful assistant",
-        prompt: "what is 2+2?",
-        experimental_telemetry: {
-          isEnabled: true,
-          recordInputs: true,
-          recordOutputs: true,
-        },
-      }
-    );
-    return { steps: { geministeps, openaisteps, anthropicsteps } };
-  }
+      });
+      return topologicalSort(workflow.nodes, workflow.connections);
+    });
+
+    //Initiate the context with any initial data from the trigger 
+    let context=event.data.initialData || {};
+
+    //Execute each node in order
+    for (const node of sortedNodes) {
+      const executor = getExecutor(node.type as NodeType);
+      context = await executor({
+        data:node.data as Record<string, unknown>,
+        nodeId:node.id,
+        context,
+        step,
+      });
+    };
+
+    return { 
+      workflowId,
+      result: context,
+     }
+    }
 );
