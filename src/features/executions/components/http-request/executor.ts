@@ -3,6 +3,7 @@ import { NonRetriableError } from "inngest";
 import ky , {type Options as KyOptions} from "ky";
 
 type HttpRequestData={
+    variableName?:string;
     endpoint?:string;
     method?:"GET" | "POST" | "PUT" | "PATCH"| "DELETE";
     body?:string;
@@ -19,6 +20,10 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
         throw new NonRetriableError(`HTTP Request node ${nodeId} is missing an endpoint`);
     }
 
+     if(!data.variableName){
+        throw new NonRetriableError(`HTTP Request node ${nodeId} is missing a variable name`);
+    }
+
     const result=await step.run("http-request",async () => {
         const endpoints=data.endpoint!;
         const method=data.method || "GET";
@@ -27,19 +32,32 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
 
         if(["POST","PUT","PATCH"].includes(method) && data.body){
             options.body=data.body;
+            options.headers={
+                "Content-Type": "application/json"
+            }
         }
         const response=await ky(endpoints,options);
         const contentType=response.headers.get("content-type");
         const responseData=contentType?.includes("application/json")
         ? await response.json()
         : await response.text(); 
-        return {
-            ...context,
+
+        const responsePayLoad={
             httpRequestExecutor:{
                 status:response.status,
                 statusText:response.statusText,
-                data:responseData,
+                data:responseData, 
+            },
+        }
+        if(data.variableName){
+        return {
+            ...context,
+            [data.variableName]: responsePayLoad,
             }
+        }
+        return {
+        ...context,
+        ...responsePayLoad, 
         }
     });
 
