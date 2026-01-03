@@ -23,7 +23,7 @@ import { useSetAtom } from 'jotai';
 import { editorAtom } from '../store/atoms';
 
 import '@xyflow/react/dist/style.css';
-import { NodeType } from '@/generated/prisma/enums';
+import { NodeType } from '@/generated/prisma';
 import { ExecuteWorkflowButton } from './execute-workflow-button';
 
 export const EditorLoading=()=>{
