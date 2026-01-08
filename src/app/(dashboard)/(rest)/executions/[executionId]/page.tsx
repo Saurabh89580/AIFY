@@ -1,4 +1,10 @@
+import { ExecutionView } from "@/features/executions/components/execution";
+import { ExecutionsError, ExecutionsLoading } from "@/features/executions/components/executions";
+import { prefetchExecution } from "@/features/executions/server/prefetch";
 import { requireAuth } from "@/lib/auth-utils";
+import { HydrateClient, prefetch } from "@/trpc/server";
+import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 
 interface CredentialsPageProps {
     params: Promise<{
@@ -9,7 +15,20 @@ interface CredentialsPageProps {
 const Page = async ({ params }: CredentialsPageProps) => {
     await requireAuth();
     const { executionId } = await params;
-    return <div>Execution Id is {executionId}</div>;
+    prefetchExecution (executionId);
+    return (
+        <div className="p-4 md:px-10 md-py-6 h-full ">
+            <div className="mx-auto max-w-3xl w-full flex flex-col gap-y-8 h-full"> 
+                <HydrateClient>
+                    <ErrorBoundary fallback={<ExecutionsError />}>
+                        <Suspense fallback={<ExecutionsLoading/>}>
+                            <ExecutionView executionId={executionId} />
+                        </Suspense>
+                    </ErrorBoundary>
+                </HydrateClient>
+            </div>
+        </div>
+    ) 
 };
 
 export default Page;
