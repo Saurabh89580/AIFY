@@ -5,6 +5,7 @@ import Handlebars from "handlebars"
 import { openAiChannel } from "@/inngest/channels/openai";
 import { generateText } from "ai";
 import prisma from "@/lib/db";
+import { decrypt } from "@/lib/encryption";
 
 
 Handlebars.registerHelper("json", (context) => {
@@ -88,7 +89,7 @@ export const openAiExecutor: NodeExecutor<OpenAiData> = async ({
         throw new NonRetriableError("OpenAi node: Credential not found");
     } 
     const openai = createOpenAI({
-        apiKey: credential.value,
+        apiKey: decrypt(credential.value),
     });
 
     try{
