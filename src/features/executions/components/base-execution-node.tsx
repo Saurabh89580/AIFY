@@ -8,7 +8,6 @@ import { BaseHandle } from "@/components/react-flow/base-handle";
 import { BaseNode,BaseNodeContent } from "@/components/react-flow/base-node";
 import { WorkflowNode } from "@/components/workflows-node";
 import { type NodeStatus, NodeStatusIndicator } from "@/components/react-flow/node-status-indicator";
-import { stat } from "fs";
 
 interface BaseExecutionNodeProps extends NodeProps {
     icon: LucideIcon | string;
@@ -47,7 +46,7 @@ export const BaseExecutionNode= memo(({
         name={name}
         description={description}
         onDelete={handleDelete}
-        onSettings={onSettings}
+        onSettings={onSettings ?? (() => {})}
         >
             <NodeStatusIndicator
             status={status}

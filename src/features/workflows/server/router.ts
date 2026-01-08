@@ -115,8 +115,8 @@ export const workflowsRouter = createTRPCRouter({
 
   updateName: protectedProcedure
     .input(z.object({ id: z.string(), name: z.string().min(1) }))
-    .mutation(({ ctx, input }) => {
-      return prisma.workflow.updateMany({
+    .mutation(async ({ ctx, input }) => {
+      const result = await prisma.workflow.updateMany({
         where: {
           id: input.id,
           userId: ctx.auth.user.id,
@@ -125,6 +125,21 @@ export const workflowsRouter = createTRPCRouter({
           name: input.name,
         },
       });
+
+      if (result.count === 0) {
+        throw new Error("Workflow not found or not authorized");
+      }
+
+      const updated = await prisma.workflow.findUnique({
+        where: { id: input.id },
+        select: { id: true, name: true },
+      });
+
+      if (!updated) {
+        throw new Error("Updated workflow not found");
+      }
+
+      return updated;
     }),
   getOne: protectedProcedure
     .input(z.object({ id: z.string() }))

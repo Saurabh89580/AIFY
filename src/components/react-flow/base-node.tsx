@@ -9,7 +9,7 @@ interface BaseNodeProps extends HTMLAttributes<HTMLDivElement> {
 
 export const BaseNode=forwardRef<
 HTMLDivElement,
-BaseNodeProps,
+BaseNodeProps
 >(({ className,status, ...props }, ref) => (
     
     <div
