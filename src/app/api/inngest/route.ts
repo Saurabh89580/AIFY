@@ -8,4 +8,6 @@ export const { GET, POST, PUT } = serve({
   functions: [
     executeWorkflow,
   ],
+  signingKey: process.env.INNGEST_SIGNING_KEY,
+  streaming:"allow"
 });
