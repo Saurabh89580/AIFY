@@ -35,8 +35,8 @@ if(!session){
     code:'UNAUTHORIZED',
     message:'User is not authenticated'
   })
-} 
-  
+}
+
   return next({ctx: {...ctx,auth:session}});
 });
 export const premiumProcedure = protectedProcedure.use(
@@ -44,15 +44,12 @@ export const premiumProcedure = protectedProcedure.use(
     const customer = await polarClient.customers.getStateExternal({
       externalId: ctx.auth.user.id,
     });
-    if(
-      !customer.activeSubscriptions ||
-      customer.activeSubscriptions.length===0
-    ){
-      throw new TRPCError({
-        code:'FORBIDDEN',
-        message:'User does not have an active subscription'
-      })
-    }
+    // if(!customer.activeSubscriptions || customer.activeSubscriptions.length===0){
+    //   throw new TRPCError({
+    //     code:'FORBIDDEN',
+    //     message:'User does not have an active subscription'
+    //   })
+    // }
     return next({ctx: {...ctx,customer}});
   }
 );
